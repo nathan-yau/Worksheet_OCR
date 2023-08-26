@@ -48,6 +48,7 @@ def main():
     supporting_functions.quit_program(escape)
     if menu == "1":
         supporting_functions.log_writer([username, "Started Grading", " "])
+    #########################################################################################
     print("Initializing the Document Scanner. . .", end=" ")
     cam, win_name, rotate = camera_control.setup_cam(username)
     print("Done")

@@ -1,7 +1,7 @@
 from paddleocr import PaddleOCR
 import cv2
 from supporting_functions import log_writer
-
+import tkinter as tk
 
 def arrange_size(cnts_each):
     x, y, w, h = cv2.boundingRect(cnts_each)
@@ -17,7 +17,7 @@ def detect_edge(handler, image_tag, frame):
     return [x, x+w, y, h+y]
 
 
-def detect_sheet_number(handler, image_tag, df, project_image, frame, edge_coordinates):
+def detect_sheet_number(handler, image_tag, df, project_image, frame, edge_coordinates, title, line_one, line_two, hide):
     ocr = PaddleOCR(use_angle_cls=True, lang='en')
     pxs, pys = edge_coordinates[0], edge_coordinates[2]
     roi = frame[pys+10:pys+200, pxs+30:pxs+300]
@@ -36,18 +36,29 @@ def detect_sheet_number(handler, image_tag, df, project_image, frame, edge_coord
         validity = (sheet_number in df.shnum.values)
         if validity is False:
             log_writer([handler, "failed_sheet_number_detection", image_tag])
-            sheet_number = sheet_number_exception(handler, image_tag, df)
+            title.config(text="Failed to recognize the sheet number.")
+            line_one.grid(row=1, column=0, sticky='w', padx=10)
+            line_two.config(text="")
+            hide.config(text="")
+            # sheet_number = sheet_number_exception(handler, image_tag, df, title, line_one, line_two)
         else:
             cv2.putText(img=project_image, text=sheet_number, org=(pxs, pys),
                         fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=2, color=(255, 255, 255), thickness=3)
     else:
-        sheet_number = sheet_number_exception(handler, image_tag, df)
+        title.config(text="Failed to recognize the sheet number.")
+        line_one.grid(row=1, column=0, sticky='w', padx=10)
+        line_one.focus_set()
+        line_two.config(text="")
+        hide.config(text="")
+        entry_var = tk.StringVar()
+        line_one["textvariable"] = entry_var
+        root.wait_variable(entry_var)
+        # sheet_number = sheet_number_exception(handler, image_tag, df, title, hide)
     return sheet_number
 
 
-def sheet_number_exception(handler, image_tag, df):
+def sheet_number_exception(handler, image_tag, df, title, line_one, line_two, hide):
     while True:
-        print("Failed to recognize the sheet number.")
         manuel_input = str(input("Please manually input the Sheet Number: "))
         sheet_number = manuel_input.upper()
         validity = (sheet_number in df.shnum.values)

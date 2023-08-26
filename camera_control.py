@@ -2,6 +2,7 @@ import cv2
 from supporting_functions import log_writer
 from supporting_functions import quit_program
 from datetime import datetime
+import tkinter as tk
 
 
 def setup_cam(handler):
@@ -13,7 +14,7 @@ def setup_cam(handler):
     win_name = "Grading Math Worksheets"
     ret, frame = cam.read()
     if frame is None:
-        print("\n"+"*"*50+"\nPlease check if the document scanner is attached!\n"+"*"*50)
+        tk.messagebox.showinfo(title="Camera Error", message="Please check if the document scanner is attached!")
         quit_program(True)
     if frame.shape[0] == 720 and frame.shape[1] == 1280:
         rotate = True
@@ -25,7 +26,9 @@ def setup_cam(handler):
         if frame.shape[0] == 1280 and frame.shape[1] == 720:
             rotate = False
         else:
-            print("\nDocument scanner not supported. 1280 x 720 required. Current resolution: "+str(frame.shape[0])+" x "+str(frame.shape[1]))
+            tk.messagebox.showinfo(title="Resolution Error",
+                                   message="Document scanner not supported. 1280 x 720 required. "
+                                           "Current resolution: "+str(frame.shape[0])+" x "+str(frame.shape[1]))
             log_writer([handler, "Resolution Error: "+str(frame.shape[0])+" x "+str(frame.shape[1]), " "])
             log_writer([handler, "Logout", " "])
             exit()
@@ -33,7 +36,7 @@ def setup_cam(handler):
     return cam, win_name, rotate
 
 
-def capturing_image(cam, win_name, rotate, img_counter, handler, dummy_image):
+def capturing_image(cam, win_name, rotate, handler, dummy_image):
     while True:
         ret, frame = cam.read()
         if rotate is True:
@@ -50,26 +53,21 @@ def capturing_image(cam, win_name, rotate, img_counter, handler, dummy_image):
         cv2.imshow(win_name, frame)
         cv2.setWindowProperty(win_name, cv2.WND_PROP_TOPMOST, 1)
         k = cv2.waitKey(1)
-        if img_counter == 0:
-            print("Ensure that the worksheet is in the designated area.")
-            print("Press SPACE on the scanner window to capture the worksheet or ESC to exit.")
-            img_counter += 1
         if k % 256 == 27:
             print("Closing the Document Scanner...")
             log_writer([handler, "Scanner Closed", " "])
             img_name = ""
             cam.release()
             cv2.destroyAllWindows()
-            status = False
+            print(img_name)
             break
         elif k % 256 == 32:
             ts = datetime.now().strftime("%Y%m%d%H%M%S")
             img_name = "{}.png".format(ts)
             log_writer([handler, "Image Capture", img_name])
             cv2.imwrite('./log_files/image_backup/{}'.format(img_name), frame)
-            status = True
             break
     dummy_image = frame.copy()
     cv2.destroyAllWindows()
-    return dummy_image, frame_copy, status, img_counter, img_name
+    return dummy_image, frame_copy, img_name
 
